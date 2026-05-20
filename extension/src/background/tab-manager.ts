@@ -4,6 +4,47 @@ import { TabInfo } from '../types';
 export class TabManager {
   private tabs: Map<number, TabInfo> = new Map();
   private activeTabId: number | null = null;
+  private listenersSetup = false;
+
+  async syncExistingTabs(): Promise<void> {
+    const existingTabs = await chrome.tabs.query({});
+    for (const tab of existingTabs) {
+      if (tab.id && !this.tabs.has(tab.id)) {
+        this.tabs.set(tab.id, {
+          id: tab.id,
+          url: tab.url || '',
+          title: tab.title || '',
+          debuggerAttached: false
+        });
+      }
+    }
+    console.log(`Synced ${existingTabs.length} existing tabs`);
+
+    // Setup lifecycle listeners once
+    if (!this.listenersSetup) {
+      chrome.tabs.onCreated.addListener((tab) => {
+        if (tab.id) {
+          this.tabs.set(tab.id, {
+            id: tab.id,
+            url: tab.url || '',
+            title: tab.title || '',
+            debuggerAttached: false
+          });
+        }
+      });
+      chrome.tabs.onRemoved.addListener((tabId) => {
+        this.tabs.delete(tabId);
+      });
+      chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        const existing = this.tabs.get(tabId);
+        if (existing) {
+          if (changeInfo.url) existing.url = changeInfo.url;
+          if (changeInfo.title) existing.title = changeInfo.title;
+        }
+      });
+      this.listenersSetup = true;
+    }
+  }
 
   async attachDebugger(tabId: number): Promise<void> {
     try {

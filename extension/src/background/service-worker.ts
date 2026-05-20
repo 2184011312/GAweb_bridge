@@ -27,6 +27,8 @@ const commandHandler = new CommandHandler(
 async function initialize() {
   try {
     await wsClient.connect();
+    // Auto-discover existing tabs
+    await tabManager.syncExistingTabs();
     console.log('Web Bridge extension initialized');
   } catch (error) {
     console.error('Failed to connect to MCP server:', error);
@@ -49,11 +51,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-// Keep service worker alive
+// Keep service worker alive — Chrome clamps alarm periods to >=1 minute
+// The heartbeat ping also prevents NAT/router/proxy timeouts on the WebSocket
 chrome.alarms.create('keepAlive', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'keepAlive') {
-    console.log('Service worker keepalive');
+    // Lightweight ping — keeps SW and WebSocket alive
+    if (wsClient.isConnected()) {
+      wsClient.sendEvent({ type: 'event', event: 'heartbeat', data: {}, timestamp: Date.now() });
+    }
   }
 });
 

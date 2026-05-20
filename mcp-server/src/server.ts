@@ -47,9 +47,11 @@ export class WebBridgeMCPServer {
       }
     });
 
-    // Handle events from extension
+    // Handle events from extension (skip noisy heartbeat events)
     this.wsServer.on('event', (message: EventMessage) => {
-      console.log('Event from extension:', message.event, message.data);
+      if (message.event !== 'heartbeat') {
+        console.log('Event from extension:', message.event, message.data);
+      }
     });
   }
 
