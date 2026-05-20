@@ -265,36 +265,46 @@ var init_debugger_controller = __esm({
       }
       async getStructuredContent(tabId) {
         const script = `
-      (function() {
-        return {
-          title: document.title,
-          url: window.location.href,
-          text: document.body ? document.body.innerText.substring(0, 100000) : '',
-          links: Array.from(document.querySelectorAll('a')).slice(0, 500).map(a => ({
-            text: (a.textContent || '').trim().substring(0, 200),
-            href: a.href || ''
-          })),
-          forms: Array.from(document.querySelectorAll('form')).slice(0, 50).map(f => ({
-            id: f.id || '',
-            action: f.action || '',
-            method: f.method || '',
-            fields: Array.from(f.elements).slice(0, 100).map(e => ({
-              name: (e as any).name || '',
-              type: (e as any).type || ''
-            }))
-          })),
-          images: Array.from(document.querySelectorAll('img')).slice(0, 200).map(img => ({
-            src: img.src || '',
-            alt: img.alt || ''
-          })),
-          headings: Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).slice(0, 200).map(h => ({
-            tag: h.tagName.toLowerCase(),
-            text: (h.textContent || '').trim().substring(0, 500)
-          }))
-        };
-      })()
+      JSON.stringify((function() {
+        try {
+          return {
+            title: document.title,
+            url: window.location.href,
+            text: document.body ? document.body.innerText.substring(0, 50000) : '',
+            links: Array.from(document.querySelectorAll('a')).slice(0, 200).map(function(a) {
+              return { text: (a.textContent || '').trim().substring(0, 200), href: a.href || '' };
+            }),
+            forms: Array.from(document.querySelectorAll('form')).slice(0, 30).map(function(f) {
+              return {
+                id: f.id || '',
+                action: f.action || '',
+                method: f.method || '',
+                fields: Array.from(f.elements).slice(0, 50).map(function(e) {
+                  return { name: e.name || '', type: e.type || '' };
+                })
+              };
+            }),
+            images: Array.from(document.querySelectorAll('img')).slice(0, 100).map(function(img) {
+              return { src: img.src || '', alt: img.alt || '' };
+            }),
+            headings: Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).slice(0, 100).map(function(h) {
+              return { tag: h.tagName.toLowerCase(), text: (h.textContent || '').trim().substring(0, 500) };
+            })
+          };
+        } catch (e) {
+          return { error: 'Structured extraction failed: ' + e.message, stack: e.stack || '' };
+        }
+      })())
     `;
-        return await this.executeScript(tabId, script);
+        const result = await this.executeScript(tabId, script);
+        if (typeof result === "string") {
+          try {
+            return JSON.parse(result);
+          } catch {
+            return { raw: result };
+          }
+        }
+        return result;
       }
       async getMarkdownContent(tabId) {
         const script = `

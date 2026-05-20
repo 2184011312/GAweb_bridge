@@ -5,6 +5,8 @@ import { CommandMessage, ResponseMessage, EventMessage } from './types';
 export class WebSocketServer extends EventEmitter {
   private wss: WsServer | null = null;
   private extensionConnection: WebSocket | null = null;
+  private connectionId: number = 0;
+  private activeConnectionId: number = 0;
   private port: number;
 
   constructor(port: number = 8765) {
@@ -27,7 +29,9 @@ export class WebSocketServer extends EventEmitter {
       });
 
       this.wss.on('connection', (ws: WebSocket) => {
-        console.log('Extension connected');
+        const id = ++this.connectionId;
+        this.activeConnectionId = id;
+        console.log(`Extension connected (id=${id})`);
         this.extensionConnection = ws;
         this.emit('connection', ws);
 
@@ -41,9 +45,14 @@ export class WebSocketServer extends EventEmitter {
         });
 
         ws.on('close', () => {
-          console.log('Extension disconnected');
-          this.extensionConnection = null;
-          this.emit('disconnect');
+          // Only clear and emit disconnect if this is still the active connection
+          if (this.activeConnectionId === id) {
+            console.log(`Extension disconnected (id=${id})`);
+            this.extensionConnection = null;
+            this.emit('disconnect');
+          } else {
+            console.log(`Stale connection closed (id=${id}, active=${this.activeConnectionId})`);
+          }
         });
 
         ws.on('error', (error) => {

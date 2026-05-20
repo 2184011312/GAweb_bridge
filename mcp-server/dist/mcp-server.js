@@ -19086,6 +19086,8 @@ var WebSocketServer2 = class extends import_events.EventEmitter {
     super();
     this.wss = null;
     this.extensionConnection = null;
+    this.connectionId = 0;
+    this.activeConnectionId = 0;
     this.port = port;
   }
   async start() {
@@ -19100,7 +19102,9 @@ var WebSocketServer2 = class extends import_events.EventEmitter {
         reject(error2);
       });
       this.wss.on("connection", (ws) => {
-        console.log("Extension connected");
+        const id = ++this.connectionId;
+        this.activeConnectionId = id;
+        console.log(`Extension connected (id=${id})`);
         this.extensionConnection = ws;
         this.emit("connection", ws);
         ws.on("message", (data) => {
@@ -19112,9 +19116,13 @@ var WebSocketServer2 = class extends import_events.EventEmitter {
           }
         });
         ws.on("close", () => {
-          console.log("Extension disconnected");
-          this.extensionConnection = null;
-          this.emit("disconnect");
+          if (this.activeConnectionId === id) {
+            console.log(`Extension disconnected (id=${id})`);
+            this.extensionConnection = null;
+            this.emit("disconnect");
+          } else {
+            console.log(`Stale connection closed (id=${id}, active=${this.activeConnectionId})`);
+          }
         });
         ws.on("error", (error2) => {
           console.error("WebSocket connection error:", error2);
