@@ -1,6 +1,6 @@
-import { Server } from '@modelcontextprotocol/sdk/server';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'crypto';
 import { WebSocketServer } from './websocket-server';
 import { CommandQueue } from './command-queue';

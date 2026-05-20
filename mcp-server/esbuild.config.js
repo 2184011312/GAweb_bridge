@@ -6,6 +6,6 @@ esbuild.build({
   platform: 'node',
   target: 'node18',
   outfile: 'dist/mcp-server.js',
-  sourcemap: true,
-  external: ['@modelcontextprotocol/sdk', 'ws']
+  sourcemap: true
+  // All deps bundled - no npm needed at runtime
 }).catch(() => process.exit(1));

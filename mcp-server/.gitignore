@@ -1,4 +1,4 @@
 node_modules/
-dist/
+# dist/ tracked for offline install
 *.log
 .DS_Store
