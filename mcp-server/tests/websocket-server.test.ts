@@ -1,0 +1,35 @@
+import { WebSocketServer } from '../src/websocket-server';
+import WebSocket from 'ws';
+
+// Use the same WS import structure for clients
+
+describe('WebSocketServer', () => {
+  let server: WebSocketServer;
+
+  afterEach(async () => {
+    if (server) {
+      await server.stop();
+    }
+  });
+
+  it('should start and listen on specified port', async () => {
+    server = new WebSocketServer(8765);
+    await server.start();
+    expect(server.isRunning()).toBe(true);
+  });
+
+  it('should handle client connection', (done) => {
+    server = new WebSocketServer(8766);
+    let client: WebSocket;
+
+    server.on('connection', (ws) => {
+      expect(ws).toBeDefined();
+      client.close();
+      done();
+    });
+
+    server.start().then(() => {
+      client = new WebSocket('ws://localhost:8766');
+    });
+  });
+});
