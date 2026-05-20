@@ -1,0 +1,19 @@
+{
+  "name": "extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/chrome": "^0.1.42",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.3"
+  }
+}
