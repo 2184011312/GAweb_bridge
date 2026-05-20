@@ -738,7 +738,7 @@ var require_service_worker = __commonJS({
         return true;
       }
     });
-    chrome.alarms.create("keepAlive", { periodInMinutes: 1 / 6 });
+    chrome.alarms.create("keepAlive", { periodInMinutes: 1 });
     chrome.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === "keepAlive") {
         if (wsClient.isConnected()) {

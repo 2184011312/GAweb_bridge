@@ -51,8 +51,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-// Keep service worker alive — fire every 10s to prevent Chrome idle termination
-chrome.alarms.create('keepAlive', { periodInMinutes: 1 / 6 });
+// Keep service worker alive — Chrome clamps alarm periods to >=1 minute
+// The heartbeat ping also prevents NAT/router/proxy timeouts on the WebSocket
+chrome.alarms.create('keepAlive', { periodInMinutes: 1 });
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'keepAlive') {
     // Lightweight ping — keeps SW and WebSocket alive
