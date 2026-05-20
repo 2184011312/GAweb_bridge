@@ -19432,7 +19432,9 @@ var WebBridgeMCPServer = class {
       }
     });
     this.wsServer.on("event", (message) => {
-      console.log("Event from extension:", message.event, message.data);
+      if (message.event !== "heartbeat") {
+        console.log("Event from extension:", message.event, message.data);
+      }
     });
   }
   async startMCP() {
