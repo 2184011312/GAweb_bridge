@@ -13,7 +13,7 @@ describe('WebSocketServer', () => {
   });
 
   it('should start and listen on specified port', async () => {
-    server = new WebSocketServer(8765);
+    server = new WebSocketServer(8769);
     await server.start();
     expect(server.isRunning()).toBe(true);
   });
