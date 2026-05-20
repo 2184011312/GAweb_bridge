@@ -83,31 +83,32 @@ export class DebuggerController {
   }
 
   private async getStructuredContent(tabId: number): Promise<any> {
+    // Conservative limits to stay within CDP returnByValue payload limits
     const script = `
       JSON.stringify((function() {
         try {
           return {
             title: document.title,
             url: window.location.href,
-            text: document.body ? document.body.innerText.substring(0, 50000) : '',
-            links: Array.from(document.querySelectorAll('a')).slice(0, 200).map(function(a) {
-              return { text: (a.textContent || '').trim().substring(0, 200), href: a.href || '' };
+            text: document.body ? document.body.innerText.substring(0, 2000) : '',
+            links: Array.from(document.querySelectorAll('a')).slice(0, 50).map(function(a) {
+              return { text: (a.textContent || '').trim().substring(0, 100), href: a.href || '' };
             }),
-            forms: Array.from(document.querySelectorAll('form')).slice(0, 30).map(function(f) {
+            forms: Array.from(document.querySelectorAll('form')).slice(0, 10).map(function(f) {
               return {
                 id: f.id || '',
                 action: f.action || '',
                 method: f.method || '',
-                fields: Array.from(f.elements).slice(0, 50).map(function(e) {
+                fields: Array.from(f.elements).slice(0, 10).map(function(e) {
                   return { name: e.name || '', type: e.type || '' };
                 })
               };
             }),
-            images: Array.from(document.querySelectorAll('img')).slice(0, 100).map(function(img) {
+            images: Array.from(document.querySelectorAll('img')).slice(0, 20).map(function(img) {
               return { src: img.src || '', alt: img.alt || '' };
             }),
-            headings: Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).slice(0, 100).map(function(h) {
-              return { tag: h.tagName.toLowerCase(), text: (h.textContent || '').trim().substring(0, 500) };
+            headings: Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).slice(0, 30).map(function(h) {
+              return { tag: h.tagName.toLowerCase(), text: (h.textContent || '').trim().substring(0, 200) };
             })
           };
         } catch (e) {
