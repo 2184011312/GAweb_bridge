@@ -278,6 +278,7 @@ var init_debugger_controller = __esm({
               return {
                 id: f.id || '',
                 action: f.action || '',
+                method: f.method || '',
                 fields: Array.from(f.elements).slice(0, 50).map(function(e) {
                   return { name: e.name || '', type: e.type || '' };
                 })

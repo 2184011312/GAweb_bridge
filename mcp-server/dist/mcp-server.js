@@ -19119,10 +19119,10 @@ var WebSocketServer2 = class extends import_events.EventEmitter {
           if (this.activeConnectionId === id) {
             console.log(`Extension disconnected (id=${id})`);
             this.extensionConnection = null;
+            this.emit("disconnect");
           } else {
             console.log(`Stale connection closed (id=${id}, active=${this.activeConnectionId})`);
           }
-          this.emit("disconnect");
         });
         ws.on("error", (error2) => {
           console.error("WebSocket connection error:", error2);

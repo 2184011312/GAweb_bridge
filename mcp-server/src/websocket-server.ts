@@ -45,14 +45,14 @@ export class WebSocketServer extends EventEmitter {
         });
 
         ws.on('close', () => {
-          // Only clear if this is still the active connection
+          // Only clear and emit disconnect if this is still the active connection
           if (this.activeConnectionId === id) {
             console.log(`Extension disconnected (id=${id})`);
             this.extensionConnection = null;
+            this.emit('disconnect');
           } else {
             console.log(`Stale connection closed (id=${id}, active=${this.activeConnectionId})`);
           }
-          this.emit('disconnect');
         });
 
         ws.on('error', (error) => {
