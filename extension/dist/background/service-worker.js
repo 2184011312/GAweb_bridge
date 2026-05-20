@@ -103,6 +103,44 @@ var init_tab_manager = __esm({
       constructor() {
         this.tabs = /* @__PURE__ */ new Map();
         this.activeTabId = null;
+        this.listenersSetup = false;
+      }
+      async syncExistingTabs() {
+        const existingTabs = await chrome.tabs.query({});
+        for (const tab of existingTabs) {
+          if (tab.id && !this.tabs.has(tab.id)) {
+            this.tabs.set(tab.id, {
+              id: tab.id,
+              url: tab.url || "",
+              title: tab.title || "",
+              debuggerAttached: false
+            });
+          }
+        }
+        console.log(`Synced ${existingTabs.length} existing tabs`);
+        if (!this.listenersSetup) {
+          chrome.tabs.onCreated.addListener((tab) => {
+            if (tab.id) {
+              this.tabs.set(tab.id, {
+                id: tab.id,
+                url: tab.url || "",
+                title: tab.title || "",
+                debuggerAttached: false
+              });
+            }
+          });
+          chrome.tabs.onRemoved.addListener((tabId) => {
+            this.tabs.delete(tabId);
+          });
+          chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+            const existing = this.tabs.get(tabId);
+            if (existing) {
+              if (changeInfo.url) existing.url = changeInfo.url;
+              if (changeInfo.title) existing.title = changeInfo.title;
+            }
+          });
+          this.listenersSetup = true;
+        }
       }
       async attachDebugger(tabId) {
         try {
@@ -683,6 +721,7 @@ var require_service_worker = __commonJS({
     async function initialize() {
       try {
         await wsClient.connect();
+        await tabManager.syncExistingTabs();
         console.log("Web Bridge extension initialized");
       } catch (error) {
         console.error("Failed to connect to MCP server:", error);
@@ -699,10 +738,12 @@ var require_service_worker = __commonJS({
         return true;
       }
     });
-    chrome.alarms.create("keepAlive", { periodInMinutes: 1 });
+    chrome.alarms.create("keepAlive", { periodInMinutes: 1 / 6 });
     chrome.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === "keepAlive") {
-        console.log("Service worker keepalive");
+        if (wsClient.isConnected()) {
+          wsClient.sendEvent({ type: "event", event: "heartbeat", data: {}, timestamp: Date.now() });
+        }
       }
     });
     initialize();
