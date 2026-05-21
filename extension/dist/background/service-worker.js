@@ -390,31 +390,162 @@ var init_debugger_controller = __esm({
         }
         return false;
       }
+      async addBinding(tabId, name) {
+        await this.sendCommand(tabId, "Runtime.addBinding", { name });
+      }
+      async removeBinding(tabId, name) {
+        try {
+          await this.sendCommand(tabId, "Runtime.removeBinding", { name });
+        } catch {
+        }
+      }
+      async addScriptOnNewDocument(tabId, script) {
+        await this.sendCommand(tabId, "Page.addScriptToEvaluateOnNewDocument", { source: script });
+      }
     };
   }
 });
 
 // src/background/recording-engine.ts
-var RecordingEngine;
+var LISTENER_SCRIPT, RecordingEngine;
 var init_recording_engine = __esm({
   "src/background/recording-engine.ts"() {
     "use strict";
+    LISTENER_SCRIPT = `
+(function() {
+  function buildSelector(el) {
+    if (el.id && !/^\\d/.test(el.id) && el.id.length < 36) return '#' + CSS.escape(el.id);
+    var path = [];
+    while (el && el.nodeType === 1 && path.length < 5) {
+      var tag = el.tagName.toLowerCase();
+      if (el.className && typeof el.className === 'string') {
+        var classes = el.className.trim().split(/\\s+/).slice(0, 3);
+        if (classes.length) tag += '.' + classes.map(function(c) { return CSS.escape(c); }).join('.');
+      }
+      path.unshift(tag);
+      el = el.parentElement;
+    }
+    return path.join(' > ');
+  }
+
+  // Click capture
+  document.addEventListener('click', function(e) {
+    var el = e.target;
+    window.__web_bridge_record({
+      type: 'click',
+      timestamp: Date.now(),
+      tabId: 0,
+      pageUrl: location.href,
+      target: { primary: buildSelector(el) },
+      context: {
+        selector: buildSelector(el),
+        tag: el.tagName ? el.tagName.toLowerCase() : '',
+        text: (el.textContent || '').trim().substring(0, 100),
+        x: e.clientX,
+        y: e.clientY
+      }
+    });
+  }, true);
+
+  // Input debounced capture (trailing-edge, 500ms)
+  var inputTimers = new WeakMap();
+  document.addEventListener('input', function(e) {
+    var el = e.target;
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el.isContentEditable)) return;
+    if (inputTimers.has(el)) clearTimeout(inputTimers.get(el));
+    inputTimers.set(el, setTimeout(function() {
+      inputTimers.delete(el);
+      window.__web_bridge_record({
+        type: 'type',
+        timestamp: Date.now(),
+        tabId: 0,
+        pageUrl: location.href,
+        target: { primary: buildSelector(el) },
+        text: el.value || el.textContent || ''
+      });
+    }, 500));
+  }, true);
+})();
+`;
     RecordingEngine = class {
-      constructor() {
+      constructor(debuggerController) {
         this.isRecording = false;
         this.currentRecording = null;
         this.startTime = 0;
+        this.recordingTabId = null;
+        this.cdpEventHandler = null;
+        // Called via Runtime.addBinding from injected page scripts
+        this.bindingCallback = (action) => {
+          if (!this.isRecording || !this.currentRecording) return;
+          if (!action.type) return;
+          if (this.recordingTabId != null) action.tabId = this.recordingTabId;
+          if (!action.pageUrl && this.currentRecording.metadata.startUrl) {
+            action.pageUrl = this.currentRecording.metadata.startUrl;
+          }
+          this.recordAction(action);
+        };
+        this.debuggerController = debuggerController;
+      }
+      async injectListeners(tabId) {
+        this.recordingTabId = tabId;
+        await this.debuggerController.addBinding(tabId, "__web_bridge_record");
+        await this.debuggerController.addScriptOnNewDocument(tabId, LISTENER_SCRIPT);
+        await this.debuggerController.sendCommand(tabId, "Page.enable");
+        this.cdpEventHandler = (source, method, params) => {
+          if (method === "Runtime.bindingCalled" && params?.name === "__web_bridge_record") {
+            try {
+              const action = JSON.parse(params.payload);
+              this.bindingCallback(action);
+            } catch {
+            }
+            return;
+          }
+          if (method === "Page.frameNavigated" && params?.frame?.url) {
+            const url = params.frame.url;
+            if (!params.frame.parentId) {
+              this.recordAction({
+                type: "navigate",
+                timestamp: Date.now(),
+                tabId: this.recordingTabId,
+                pageUrl: url,
+                url
+              });
+            }
+          }
+        };
+        chrome.debugger.onEvent.addListener(this.cdpEventHandler);
+        console.log(`Recording listeners injected into tab ${tabId}`);
+      }
+      async removeListeners() {
+        if (this.recordingTabId != null) {
+          try {
+            await this.debuggerController.removeBinding(this.recordingTabId, "__web_bridge_record");
+          } catch {
+          }
+        }
+        if (this.cdpEventHandler) {
+          chrome.debugger.onEvent.removeListener(this.cdpEventHandler);
+          this.cdpEventHandler = null;
+        }
+        this.recordingTabId = null;
+        console.log("Recording listeners removed");
       }
       async startRecording(tabId) {
         const recordingId = crypto.randomUUID();
         this.startTime = Date.now();
+        let startUrl = "";
+        try {
+          const tab = await chrome.tabs.get(tabId);
+          startUrl = tab.url || "";
+        } catch {
+        }
         this.currentRecording = {
           id: recordingId,
           name: `Recording ${(/* @__PURE__ */ new Date()).toISOString()}`,
           createdAt: (/* @__PURE__ */ new Date()).toISOString(),
           actions: [],
           metadata: {
-            startUrl: "",
+            startUrl,
             duration: 0,
             actionCount: 0
           }
@@ -433,10 +564,14 @@ var init_recording_engine = __esm({
         this.currentRecording.metadata.actionCount = this.currentRecording.actions.length;
         const recording = this.currentRecording;
         this.currentRecording = null;
-        await chrome.storage.local.set({
-          [`recording_${recording.id}`]: recording
-        });
-        console.log(`Stopped recording: ${recording.id}`);
+        try {
+          await chrome.storage.local.set({
+            [`recording_${recording.id}`]: recording
+          });
+        } catch (error) {
+          console.warn("Failed to save recording to storage:", error);
+        }
+        console.log(`Stopped recording: ${recording.id} (${recording.metadata.actionCount} actions)`);
         return recording;
       }
       recordAction(action) {
@@ -685,9 +820,12 @@ var init_command_handler = __esm({
           }
           // Recording
           case "start_recording":
+            await this.ensureDebuggerAttached(params.tabId);
             const recordingId = await this.recordingEngine.startRecording(params.tabId);
+            await this.recordingEngine.injectListeners(params.tabId);
             return { recordingId };
           case "stop_recording":
+            await this.recordingEngine.removeListeners();
             const recording = await this.recordingEngine.stopRecording();
             return { recording };
           case "replay_recording":
@@ -735,7 +873,7 @@ var require_service_worker = __commonJS({
     var wsClient = new WebSocketClient("ws://localhost:8765");
     var tabManager = new TabManager();
     var debuggerController = new DebuggerController();
-    var recordingEngine = new RecordingEngine();
+    var recordingEngine = new RecordingEngine(debuggerController);
     var playbackEngine = new PlaybackEngine(debuggerController);
     var sessionManager = new SessionManager();
     var commandHandler = new CommandHandler(

@@ -19343,7 +19343,7 @@ function getToolDefinitions() {
     // Recording and playback
     {
       name: "start_recording",
-      description: "[EXPERIMENTAL] Start recording user actions. Currently records action metadata only \u2014 DOM event capture not yet implemented.",
+      description: "Start recording user actions (click, type, navigate)",
       inputSchema: {
         type: "object",
         properties: {
@@ -19354,16 +19354,16 @@ function getToolDefinitions() {
     },
     {
       name: "stop_recording",
-      description: "[EXPERIMENTAL] Stop recording and return the recording.",
+      description: "Stop recording and return the recorded actions",
       inputSchema: {
         type: "object",
-        properties: {}
-      },
-      required: []
+        properties: {},
+        required: []
+      }
     },
     {
       name: "replay_recording",
-      description: "[EXPERIMENTAL] Replay a recorded session. Uses blind timing \u2014 no DOM verification between steps.",
+      description: "Replay a recorded session",
       inputSchema: {
         type: "object",
         properties: {
