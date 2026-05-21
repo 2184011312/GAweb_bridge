@@ -48,12 +48,21 @@ export interface Recording {
 }
 
 export interface Action {
-  type: 'navigate' | 'click' | 'type' | 'wait';
+  type: 'navigate' | 'click' | 'type' | 'wait' | 'scroll' | 'keydown' | 'submit' | 'select' | 'drag';
   timestamp: number;
+  tabId?: number;
+  pageUrl?: string;
   target?: ElementTarget;
   url?: string;
   text?: string;
   waitConditions?: WaitConditions;
+  context?: {
+    selector: string;
+    tag: string;
+    text: string;
+    x: number;
+    y: number;
+  };
 }
 
 export interface ElementTarget {
