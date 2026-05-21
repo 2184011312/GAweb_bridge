@@ -492,7 +492,6 @@ var init_recording_engine = __esm({
       async injectListeners(tabId) {
         this.recordingTabId = tabId;
         await this.debuggerController.addBinding(tabId, "__web_bridge_record");
-        await this.debuggerController.addScriptOnNewDocument(tabId, LISTENER_SCRIPT);
         await this.debuggerController.executeScript(tabId, LISTENER_SCRIPT);
         await this.debuggerController.sendCommand(tabId, "Page.enable");
         this.cdpEventHandler = (source, method, params) => {
@@ -507,6 +506,8 @@ var init_recording_engine = __esm({
           if (method === "Page.frameNavigated" && params?.frame?.url) {
             const url = params.frame.url;
             if (!params.frame.parentId) {
+              this.debuggerController.executeScript(tabId, LISTENER_SCRIPT).catch(() => {
+              });
               this.recordAction({
                 type: "navigate",
                 timestamp: Date.now(),

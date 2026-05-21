@@ -93,17 +93,16 @@ export class RecordingEngine {
     //         CDP emits Runtime.bindingCalled → chrome.debugger.onEvent
     await this.debuggerController.addBinding(tabId, '__web_bridge_record');
 
-    // Step 2: Inject listener script for future page loads
-    await this.debuggerController.addScriptOnNewDocument(tabId, LISTENER_SCRIPT);
-
-    // Step 2b: Also run on the already-loaded page (addScriptOnNewDocument
-    // only affects subsequent loads, not the current document)
+    // Step 2: Inject listener script on the already-loaded page
+    //         (avoid addScriptOnNewDocument — it accumulates across
+    //         recordings and causes duplicate actions; we re-inject
+    //         on every frame navigation instead)
     await this.debuggerController.executeScript(tabId, LISTENER_SCRIPT);
 
     // Step 3: Enable Page domain for frame navigated events
     await this.debuggerController.sendCommand(tabId, 'Page.enable');
 
-    // Step 4: Single CDP event handler for both binding callbacks AND navigations
+    // Step 4: Single CDP event handler for binding callbacks AND navigations
     this.cdpEventHandler = (source: any, method: string, params: any) => {
       // Runtime.bindingCalled → user clicked/typed on the page
       if (method === 'Runtime.bindingCalled' && params?.name === '__web_bridge_record') {
@@ -113,10 +112,12 @@ export class RecordingEngine {
         } catch { /* malformed data from page — ignore */ }
         return;
       }
-      // Page.frameNavigated → user navigated (link click, form submit, redirect)
+      // Page.frameNavigated → user navigated → re-inject listeners on new page
       if (method === 'Page.frameNavigated' && params?.frame?.url) {
         const url = params.frame.url;
         if (!params.frame.parentId) {
+          // Re-inject listeners into the new page
+          this.debuggerController.executeScript(tabId, LISTENER_SCRIPT).catch(() => {});
           this.recordAction({
             type: 'navigate',
             timestamp: Date.now(),
