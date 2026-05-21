@@ -160,7 +160,8 @@ export function getToolDefinitions(): ToolDefinition[] {
       inputSchema: {
         type: 'object',
         properties: {
-          recordingId: { type: 'string', description: 'Recording ID' }
+          recordingId: { type: 'string', description: 'Recording ID' },
+          tabId: { type: 'number', description: 'Tab to replay in (auto-selects if omitted)' }
         },
         required: ['recordingId']
       }

@@ -111,7 +111,6 @@ var init_tab_manager = __esm({
     TabManager = class {
       constructor() {
         this.tabs = /* @__PURE__ */ new Map();
-        this.activeTabId = null;
         this.listenersSetup = false;
       }
       async syncExistingTabs() {
@@ -212,10 +211,6 @@ var init_tab_manager = __esm({
         await chrome.tabs.remove(tabId);
         this.tabs.delete(tabId);
       }
-      async switchTab(tabId) {
-        await chrome.tabs.update(tabId, { active: true });
-        this.activeTabId = tabId;
-      }
       listTabs() {
         return Array.from(this.tabs.values());
       }
@@ -230,6 +225,21 @@ var init_tab_manager = __esm({
 });
 
 // src/background/debugger-controller.ts
+function mapError(err) {
+  const msg = err.message || "";
+  if (msg.includes("No tab with id") || msg.includes("No target with given id")) {
+    err.code = "TAB_NOT_FOUND";
+  } else if (msg.includes("Another debugger is already attached")) {
+    err.code = "DEBUGGER_ATTACH_FAILED";
+  } else if (msg.includes("Element not found")) {
+    err.code = "ELEMENT_NOT_FOUND";
+  } else if (msg.includes("Cannot find context with specified id")) {
+    err.code = "TAB_CLOSED";
+  } else if (msg.includes("timeout")) {
+    err.code = "TIMEOUT";
+  }
+  return err;
+}
 var DebuggerController;
 var init_debugger_controller = __esm({
   "src/background/debugger-controller.ts"() {
@@ -239,7 +249,7 @@ var init_debugger_controller = __esm({
         return new Promise((resolve, reject) => {
           chrome.debugger.sendCommand({ tabId }, method, params, (result) => {
             if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
+              reject(mapError(new Error(chrome.runtime.lastError.message)));
             } else {
               resolve(result);
             }
@@ -292,7 +302,7 @@ var init_debugger_controller = __esm({
           returnByValue: true
         });
         if (result.exceptionDetails) {
-          throw new Error(result.exceptionDetails.text || "Script execution error");
+          throw mapError(new Error(result.exceptionDetails.text || "Script execution error"));
         }
         return result.result?.value;
       }
