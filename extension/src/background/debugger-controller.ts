@@ -83,7 +83,7 @@ export class DebuggerController {
       returnByValue: true
     });
     if (result.exceptionDetails) {
-      throw new Error(result.exceptionDetails.text || 'Script execution error');
+      throw mapError(new Error(result.exceptionDetails.text || 'Script execution error'));
     }
     return result.result?.value;
   }

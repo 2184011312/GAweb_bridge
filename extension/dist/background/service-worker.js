@@ -204,10 +204,6 @@ var init_tab_manager = __esm({
         await chrome.tabs.remove(tabId);
         this.tabs.delete(tabId);
       }
-      async switchTab(tabId) {
-        await chrome.tabs.update(tabId, { active: true });
-        this.activeTabId = tabId;
-      }
       listTabs() {
         return Array.from(this.tabs.values());
       }
@@ -299,7 +295,7 @@ var init_debugger_controller = __esm({
           returnByValue: true
         });
         if (result.exceptionDetails) {
-          throw new Error(result.exceptionDetails.text || "Script execution error");
+          throw mapError(new Error(result.exceptionDetails.text || "Script execution error"));
         }
         return result.result?.value;
       }

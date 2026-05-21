@@ -112,11 +112,6 @@ export class TabManager {
     this.tabs.delete(tabId);
   }
 
-  async switchTab(tabId: number): Promise<void> {
-    await chrome.tabs.update(tabId, { active: true });
-    this.activeTabId = tabId;
-  }
-
   listTabs(): TabInfo[] {
     return Array.from(this.tabs.values());
   }
