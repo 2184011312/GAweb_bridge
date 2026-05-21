@@ -413,6 +413,9 @@ var init_recording_engine = __esm({
     "use strict";
     LISTENER_SCRIPT = `
 (function() {
+  if (window.__web_bridge_listeners_installed) return;
+  window.__web_bridge_listeners_installed = true;
+
   function buildSelector(el) {
     if (el.id && !/^\\d/.test(el.id) && el.id.length < 36) return '#' + CSS.escape(el.id);
     var path = [];
