@@ -24,45 +24,30 @@ GAweb Bridge 通过 MCP 协议让 Claude Code 等 AI 助手控制你手动打开
 
 ## 安装
 
-### 在线环境（有 npm）
+### 1. 获取代码
 
 ```bash
 git clone https://github.com/2184011312/GAweb_bridge.git
 cd GAweb_bridge
-
-# MCP 服务器
-cd mcp-server && npm install && npm run build && cd ..
-
-# 浏览器扩展  
-cd extension && npm install && npm run build && cd ..
 ```
 
-### 离线环境（无 npm）★
+> 提交记录包含所有预构建产物，克隆后无需 npm install / npm run build 即可直接使用。
 
-```
-无需 npm。预构建文件已包含在仓库中。
-只需要 Node.js 运行时（v18+）。
-```
+### 2. 加载浏览器扩展
 
-**使用步骤：**
-
-**1. 获取代码**
-
-把整个仓库复制到目标机器（U盘、内网共享等）。
-
-**2. 加载扩展**
-
-1. 打开 Chrome/Edge，地址栏输入 `chrome://extensions/`
+1. 打开 Chrome 或 Edge，地址栏输入 `chrome://extensions/` 或 `edge://extensions/`
 2. 启用右上角 **开发者模式**
 3. 点击 **加载已解压的扩展程序**
 4. 选择 `extension/dist` 目录
 
-**3. 配置 Claude Code**
+### 3. 配置 Claude Code
 
-在 Claude Code 的 settings.json 中添加 MCP 服务器配置：
+创建或编辑 Claude Code 的 MCP 配置文件：
 
-> Windows: `%USERPROFILE%\.claude\settings.json`  
-> macOS/Linux: `~/.claude/settings.json`
+| 系统 | 路径 |
+|------|------|
+| Windows | `%USERPROFILE%\.mcp.json` |
+| macOS / Linux | `~/.mcp.json` |
 
 ```json
 {
@@ -78,9 +63,23 @@ cd extension && npm install && npm run build && cd ..
 }
 ```
 
-**4. 启动**
+将 `<仓库路径>` 替换为 `git clone` 下载到的实际路径，例如：
+- Windows: `C:/Users/xxx/GAweb_bridge/mcp-server/dist/mcp-server.js`
+- macOS/Linux: `/home/xxx/GAweb_bridge/mcp-server/dist/mcp-server.js`
 
-重启 Claude Code，浏览器扩展 Popup 显示 "Status: Connected" 即就绪。
+### 4. 启动
+
+1. 重启 Claude Code
+2. 浏览器扩展弹窗显示 **"Status: Connected"** 即就绪
+
+### 在线环境（如需修改源码）
+
+如果修改了 TypeScript 源代码，需要在线环境重新构建：
+
+```bash
+cd mcp-server && npm install && npm run build && cd ..
+cd extension && npm install && npm run build && cd ..
+```
 
 ### 预构建文件说明
 
@@ -88,8 +87,6 @@ cd extension && npm install && npm run build && cd ..
 |------|------|------|
 | `mcp-server/dist/mcp-server.js` | ~680KB | MCP 服务器单文件，含全部依赖 |
 | `extension/dist/` | ~30KB | 扩展构建产物，可直接加载 |
-
-> **注意**: 如果修改了源代码，需要在线环境重新 `npm run build`。
 
 ## 功能
 
