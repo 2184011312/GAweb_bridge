@@ -8,8 +8,11 @@ import { SessionManager } from './session-manager';
 import { CommandHandler } from './command-handler';
 import { CommandMessage } from '../types';
 
+// Default configuration
+const DEFAULT_WS_URL = 'ws://localhost:8765';
+
 // Initialize components
-const wsClient = new WebSocketClient('ws://localhost:8765');
+const wsClient = new WebSocketClient();
 const tabManager = new TabManager();
 const debuggerController = new DebuggerController();
 const recordingEngine = new RecordingEngine(debuggerController);
@@ -23,8 +26,21 @@ const commandHandler = new CommandHandler(
   sessionManager
 );
 
+// Load configuration from storage
+async function loadConfig(): Promise<string> {
+  try {
+    const result = await chrome.storage.local.get(['arc_tunnel_ws_url']);
+    return result.arc_tunnel_ws_url || DEFAULT_WS_URL;
+  } catch {
+    return DEFAULT_WS_URL;
+  }
+}
+
 // Connect to MCP server
 async function initialize() {
+  const wsUrl = await loadConfig();
+  wsClient.setUrl(wsUrl);
+
   try {
     await wsClient.connect();
     // Auto-discover existing tabs
@@ -35,6 +51,19 @@ async function initialize() {
     // Reconnection is handled by WebSocketClient exponential backoff
   }
 }
+
+// Listen for configuration changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.arc_tunnel_ws_url) {
+    const newUrl = changes.arc_tunnel_ws_url.newValue || DEFAULT_WS_URL;
+    console.log(`WebSocket URL changed to: ${newUrl}`);
+    wsClient.setUrl(newUrl);
+    // Trigger reconnect
+    if (!wsClient.isConnected()) {
+      initialize();
+    }
+  }
+});
 
 // Handle commands from MCP server
 wsClient.onCommand(async (command: CommandMessage) => {

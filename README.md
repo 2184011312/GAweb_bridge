@@ -40,9 +40,31 @@ cd arc-tunnel
 3. 点击 **加载已解压的扩展程序**
 4. 选择 `extension/dist` 目录
 
-### 3. 配置 Claude Code
+### 3. 配置 AI Agent 工具
 
-创建或编辑 Claude Code 的 MCP 配置文件：
+Arc Tunnel 支持多种 AI Agent 工具，提供一键自动配置：
+
+```bash
+node scripts/install.js
+```
+
+该脚本会自动检测系统中已安装的 Agent 工具并写入对应配置。
+
+#### 支持的 Agent 工具
+
+| Agent 工具 | 配置格式 | 配置文件路径 |
+|-----------|---------|------------|
+| **Claude Code** | JSON | `~/.mcp.json` |
+| **Hermes Agent** | YAML | `~/.hermes/config.yaml` |
+| **OpenClaw** | JSON | `~/.openclaw/openclaw.json` |
+| **Kimi Code CLI** | JSON | `~/.mcp.json` |
+| **Codex (OpenAI)** | YAML | Skill-level `agents/openai.yaml` |
+
+#### 手动配置
+
+如果自动配置不适用，可从 `configs/` 目录复制对应模板手动配置：
+
+**Claude Code / Kimi（`.mcp.json`）**
 
 | 系统 | 路径 |
 |------|------|
@@ -63,14 +85,42 @@ cd arc-tunnel
 }
 ```
 
+**Hermes Agent（`~/.hermes/config.yaml`）**
+
+```yaml
+mcp_servers:
+  arc-tunnel:
+    command: "node"
+    args:
+      - "<仓库路径>/mcp-server/dist/mcp-server.js"
+    env:
+      WS_PORT: "8765"
+    timeout: 120
+    supports_parallel_tool_calls: true
+```
+
 将 `<仓库路径>` 替换为 `git clone` 下载到的实际路径，例如：
 - Windows: `C:/Users/xxx/arc-tunnel/mcp-server/dist/mcp-server.js`
 - macOS/Linux: `/home/xxx/arc-tunnel/mcp-server/dist/mcp-server.js`
 
 ### 4. 启动
 
-1. 重启 Claude Code
-2. 浏览器扩展弹窗显示 **"Status: Connected"** 即就绪
+**方式一：通过 AI Agent 自动启动**
+
+大多数 Agent 工具（Claude Code、Kimi 等）会在需要时自动启动 MCP Server。
+
+**方式二：手动启动**
+
+```bash
+node scripts/start.js        # 默认端口 8765
+node scripts/start.js --port 9876  # 自定义端口
+```
+
+### 5. 验证连接
+
+1. 重启你的 AI Agent 工具
+2. 点击浏览器扩展图标，弹窗应显示 **"Status: Connected"**
+3. 如果 MCP Server 运行在非默认端口，可在扩展弹窗中修改 **MCP Server URL**
 
 ### 在线环境（如需修改源码）
 
@@ -182,6 +232,15 @@ arc-tunnel/
 │   │   └── types/
 │   ├── public/manifest.json
 │   └── dist/               # 预构建产物 (已纳入 git)
+├── configs/                # 各 Agent 工具的 MCP 配置模板
+│   ├── claude-code.json
+│   ├── hermes.yaml
+│   ├── openclaw.json
+│   ├── kimi.md
+│   └── codex-skill.yaml
+├── scripts/                # 辅助脚本
+│   ├── install.js          # 自动检测并配置 Agent 工具
+│   └── start.js            # 一键启动 MCP Server
 └── docs/superpowers/
     ├── specs/              # 设计文档
     └── plans/              # 实现计划

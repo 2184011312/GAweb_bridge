@@ -24,13 +24,42 @@
           statusEl.className = "status disconnected";
         }
       }
+      function loadConfig(urlInput) {
+        chrome.storage.local.get(["arc_tunnel_ws_url"], (result) => {
+          if (result.arc_tunnel_ws_url) {
+            urlInput.value = result.arc_tunnel_ws_url;
+          }
+        });
+      }
+      function saveConfig(urlInput, statusEl) {
+        const url = urlInput.value.trim();
+        if (!url) {
+          statusEl.textContent = "Status: URL cannot be empty";
+          statusEl.className = "status disconnected";
+          return;
+        }
+        chrome.storage.local.set({ arc_tunnel_ws_url: url }, () => {
+          statusEl.textContent = "Status: Saved \u2014 reconnecting...";
+          statusEl.className = "status disconnected";
+          setTimeout(() => checkStatus(statusEl), 2e3);
+        });
+      }
       document.addEventListener("DOMContentLoaded", () => {
         const statusEl = document.getElementById("status");
-        if (!statusEl) return;
+        const urlInput = document.getElementById("ws-url");
+        const saveBtn = document.getElementById("save-config");
+        if (!statusEl || !urlInput || !saveBtn) return;
         statusEl.textContent = "Status: Checking...";
         statusEl.className = "status disconnected";
+        loadConfig(urlInput);
         checkStatus(statusEl);
         const interval = setInterval(() => checkStatus(statusEl), 3e3);
+        saveBtn.addEventListener("click", () => saveConfig(urlInput, statusEl));
+        urlInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            saveConfig(urlInput, statusEl);
+          }
+        });
         window.addEventListener("unload", () => clearInterval(interval));
       });
     }

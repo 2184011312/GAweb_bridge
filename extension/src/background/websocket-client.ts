@@ -11,7 +11,14 @@ export class WebSocketClient {
   private messageHandlers: Map<string, (message: any) => void> = new Map();
   private intentionalClose = false;
 
-  constructor(url: string = 'ws://localhost:8765') {
+  constructor(url?: string) {
+    this.url = url || 'ws://localhost:8765';
+  }
+
+  setUrl(url: string): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.disconnect();
+    }
     this.url = url;
   }
 

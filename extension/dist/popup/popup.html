@@ -5,9 +5,10 @@
   <title>Arc Tunnel</title>
   <style>
     body {
-      width: 300px;
+      width: 320px;
       padding: 16px;
       font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
     }
     h2 {
       margin: 0 0 12px 0;
@@ -21,6 +22,47 @@
     }
     .connected { background: #d4edda; color: #155724; }
     .disconnected { background: #f8d7da; color: #721c24; }
+    .config-section {
+      border-top: 1px solid #eee;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .config-section label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .config-section input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .config-section input:focus {
+      outline: none;
+      border-color: #4a90d9;
+    }
+    .config-section button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #4a90d9;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .config-section button:hover {
+      background: #357abd;
+    }
+    .hint {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
     p {
       font-size: 12px;
       color: #666;
@@ -31,9 +73,16 @@
 <body>
   <h2>Arc Tunnel</h2>
   <div id="status" class="status disconnected">
-    Status: Disconnected
+    Status: Checking...
   </div>
-  <p>Extension is running in the background.</p>
+
+  <div class="config-section">
+    <label for="ws-url">MCP Server URL</label>
+    <input type="text" id="ws-url" value="ws://localhost:8765" placeholder="ws://localhost:8765">
+    <div class="hint">Change this if your MCP server runs on a different host/port</div>
+    <button id="save-config">Save & Reconnect</button>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>

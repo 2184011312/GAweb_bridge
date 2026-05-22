@@ -12,7 +12,7 @@ var init_websocket_client = __esm({
   "src/background/websocket-client.ts"() {
     "use strict";
     WebSocketClient = class {
-      constructor(url = "ws://localhost:8765") {
+      constructor(url) {
         this.ws = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 10;
@@ -20,6 +20,12 @@ var init_websocket_client = __esm({
         this.maxReconnectDelay = 3e4;
         this.messageHandlers = /* @__PURE__ */ new Map();
         this.intentionalClose = false;
+        this.url = url || "ws://localhost:8765";
+      }
+      setUrl(url) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.disconnect();
+        }
         this.url = url;
       }
       async connect() {
@@ -875,7 +881,8 @@ var require_service_worker = __commonJS({
     init_playback_engine();
     init_session_manager();
     init_command_handler();
-    var wsClient = new WebSocketClient("ws://localhost:8765");
+    var DEFAULT_WS_URL = "ws://localhost:8765";
+    var wsClient = new WebSocketClient();
     var tabManager = new TabManager();
     var debuggerController = new DebuggerController();
     var recordingEngine = new RecordingEngine(debuggerController);
@@ -888,7 +895,17 @@ var require_service_worker = __commonJS({
       playbackEngine,
       sessionManager
     );
+    async function loadConfig() {
+      try {
+        const result = await chrome.storage.local.get(["arc_tunnel_ws_url"]);
+        return result.arc_tunnel_ws_url || DEFAULT_WS_URL;
+      } catch {
+        return DEFAULT_WS_URL;
+      }
+    }
     async function initialize() {
+      const wsUrl = await loadConfig();
+      wsClient.setUrl(wsUrl);
       try {
         await wsClient.connect();
         await tabManager.syncExistingTabs();
@@ -897,6 +914,16 @@ var require_service_worker = __commonJS({
         console.error("Failed to connect to MCP server:", error);
       }
     }
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && changes.arc_tunnel_ws_url) {
+        const newUrl = changes.arc_tunnel_ws_url.newValue || DEFAULT_WS_URL;
+        console.log(`WebSocket URL changed to: ${newUrl}`);
+        wsClient.setUrl(newUrl);
+        if (!wsClient.isConnected()) {
+          initialize();
+        }
+      }
+    });
     wsClient.onCommand(async (command) => {
       console.log("Received command:", command.command);
       const response = await commandHandler.handleCommand(command);

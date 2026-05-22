@@ -1,0 +1,13 @@
+# Add this to your Codex skill's agents/openai.yaml
+# Arc Tunnel — Browser automation MCP server
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "arc-tunnel"
+      description: "Arc Tunnel browser automation — navigate, click, type, screenshot, record and replay"
+      transport: "stdio"
+      command: "node"
+      args:
+        - "{{REPO_PATH}}/mcp-server/dist/mcp-server.js"
+      env:
+        WS_PORT: "8765"

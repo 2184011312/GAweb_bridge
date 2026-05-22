@@ -1,0 +1,10 @@
+mcp_servers:
+  arc-tunnel:
+    command: "node"
+    args:
+      - "{{REPO_PATH}}/mcp-server/dist/mcp-server.js"
+    env:
+      WS_PORT: "8765"
+    timeout: 120
+    connect_timeout: 60
+    supports_parallel_tool_calls: true

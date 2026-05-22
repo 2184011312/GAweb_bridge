@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "arc-tunnel": {
+      "command": "node",
+      "args": ["{{REPO_PATH}}/mcp-server/dist/mcp-server.js"],
+      "env": {
+        "WS_PORT": "8765"
+      }
+    }
+  }
+}
