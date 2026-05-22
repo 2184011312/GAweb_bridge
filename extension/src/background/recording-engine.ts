@@ -5,8 +5,8 @@ import { DebuggerController } from './debugger-controller';
 // Injected into every page load via Page.addScriptToEvaluateOnNewDocument
 const LISTENER_SCRIPT = `
 (function() {
-  if (window.__web_bridge_listeners_installed) return;
-  window.__web_bridge_listeners_installed = true;
+  if (window.__arc_tunnel_listeners_installed) return;
+  window.__arc_tunnel_listeners_installed = true;
 
   function buildSelector(el) {
     if (el.id && !/^\\d/.test(el.id) && el.id.length < 36) return '#' + CSS.escape(el.id);
@@ -26,7 +26,7 @@ const LISTENER_SCRIPT = `
   // Click capture
   document.addEventListener('click', function(e) {
     var el = e.target;
-    window.__web_bridge_record(JSON.stringify({
+    window.__arc_tunnel_record(JSON.stringify({
       type: 'click',
       timestamp: Date.now(),
       tabId: 0,
@@ -50,7 +50,7 @@ const LISTENER_SCRIPT = `
     if (inputTimers.has(el)) clearTimeout(inputTimers.get(el));
     inputTimers.set(el, setTimeout(function() {
       inputTimers.delete(el);
-      window.__web_bridge_record(JSON.stringify({
+      window.__arc_tunnel_record(JSON.stringify({
         type: 'type',
         timestamp: Date.now(),
         tabId: 0,
@@ -89,9 +89,9 @@ export class RecordingEngine {
   async injectListeners(tabId: number): Promise<void> {
     this.recordingTabId = tabId;
 
-    // Step 1: Add binding — page calls window.__web_bridge_record(data) →
+    // Step 1: Add binding — page calls window.__arc_tunnel_record(data) →
     //         CDP emits Runtime.bindingCalled → chrome.debugger.onEvent
-    await this.debuggerController.addBinding(tabId, '__web_bridge_record');
+    await this.debuggerController.addBinding(tabId, '__arc_tunnel_record');
 
     // Step 2: Inject listener script on the already-loaded page
     //         (avoid addScriptOnNewDocument — it accumulates across
@@ -105,7 +105,7 @@ export class RecordingEngine {
     // Step 4: Single CDP event handler for binding callbacks AND navigations
     this.cdpEventHandler = (source: any, method: string, params: any) => {
       // Runtime.bindingCalled → user clicked/typed on the page
-      if (method === 'Runtime.bindingCalled' && params?.name === '__web_bridge_record') {
+      if (method === 'Runtime.bindingCalled' && params?.name === '__arc_tunnel_record') {
         try {
           const action = JSON.parse(params.payload) as Action;
           this.bindingCallback(action);
@@ -136,7 +136,7 @@ export class RecordingEngine {
   async removeListeners(): Promise<void> {
     if (this.recordingTabId != null) {
       try {
-        await this.debuggerController.removeBinding(this.recordingTabId, '__web_bridge_record');
+        await this.debuggerController.removeBinding(this.recordingTabId, '__arc_tunnel_record');
       } catch { /* ignore */ }
     }
     if (this.cdpEventHandler) {

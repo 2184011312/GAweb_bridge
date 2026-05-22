@@ -1,8 +1,8 @@
-# GAweb Bridge
+# Arc Tunnel
 
 > AI-powered browser automation — 让 AI 控制你的真实浏览器
 
-GAweb Bridge 通过 MCP 协议让 Claude Code 等 AI 助手控制你手动打开的浏览器，执行导航、点击、输入、截图等操作。支持录制回放和会话管理。
+Arc Tunnel 通过 MCP 协议让 Claude Code 等 AI 助手控制你手动打开的浏览器，执行导航、点击、输入、截图等操作。支持录制回放和会话管理。
 
 ## 架构
 
@@ -27,8 +27,8 @@ GAweb Bridge 通过 MCP 协议让 Claude Code 等 AI 助手控制你手动打开
 ### 1. 获取代码
 
 ```bash
-git clone https://github.com/2184011312/GAweb_bridge.git
-cd GAweb_bridge
+git clone https://github.com/2184011312/arc-tunnel.git
+cd arc-tunnel
 ```
 
 > 提交记录包含所有预构建产物，克隆后无需 npm install / npm run build 即可直接使用。
@@ -52,7 +52,7 @@ cd GAweb_bridge
 ```json
 {
   "mcpServers": {
-    "web-bridge": {
+    "arc-tunnel": {
       "command": "node",
       "args": ["<仓库路径>/mcp-server/dist/mcp-server.js"],
       "env": {
@@ -64,8 +64,8 @@ cd GAweb_bridge
 ```
 
 将 `<仓库路径>` 替换为 `git clone` 下载到的实际路径，例如：
-- Windows: `C:/Users/xxx/GAweb_bridge/mcp-server/dist/mcp-server.js`
-- macOS/Linux: `/home/xxx/GAweb_bridge/mcp-server/dist/mcp-server.js`
+- Windows: `C:/Users/xxx/arc-tunnel/mcp-server/dist/mcp-server.js`
+- macOS/Linux: `/home/xxx/arc-tunnel/mcp-server/dist/mcp-server.js`
 
 ### 4. 启动
 
@@ -163,7 +163,7 @@ restore_session({ sessionId })
 ## 项目结构
 
 ```
-GAweb_bridge/
+arc-tunnel/
 ├── mcp-server/             # MCP 服务器 (Node.js + TypeScript)
 │   ├── src/                # 源代码
 │   │   ├── index.ts        # 入口

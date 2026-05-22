@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Web Bridge",
+  "name": "Arc Tunnel",
   "version": "1.0.0",
   "description": "AI-powered browser automation",
   "permissions": [

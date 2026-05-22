@@ -19400,14 +19400,14 @@ function getToolDefinitions() {
 }
 
 // src/server.ts
-var WebBridgeMCPServer = class {
+var ArcTunnelMCPServer = class {
   constructor(port = 8765) {
     this.port = port;
     this.wsServer = new WebSocketServer2(port);
     this.commandQueue = new CommandQueue();
     this.mcpServer = new Server(
       {
-        name: "web-bridge",
+        name: "arc-tunnel",
         version: "1.0.0"
       },
       {
@@ -19528,7 +19528,7 @@ var WebBridgeMCPServer = class {
 // src/index.ts
 async function main() {
   const port = parseInt(process.env.WS_PORT || "8765");
-  const server = new WebBridgeMCPServer(port);
+  const server = new ArcTunnelMCPServer(port);
   await server.startMCP();
   server.startWebSocketWithRetry().catch((error2) => {
     console.error("WebSocket server failed to start:", error2.message);

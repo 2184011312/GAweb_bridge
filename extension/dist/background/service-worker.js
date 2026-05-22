@@ -413,8 +413,8 @@ var init_recording_engine = __esm({
     "use strict";
     LISTENER_SCRIPT = `
 (function() {
-  if (window.__web_bridge_listeners_installed) return;
-  window.__web_bridge_listeners_installed = true;
+  if (window.__arc_tunnel_listeners_installed) return;
+  window.__arc_tunnel_listeners_installed = true;
 
   function buildSelector(el) {
     if (el.id && !/^\\d/.test(el.id) && el.id.length < 36) return '#' + CSS.escape(el.id);
@@ -434,7 +434,7 @@ var init_recording_engine = __esm({
   // Click capture
   document.addEventListener('click', function(e) {
     var el = e.target;
-    window.__web_bridge_record(JSON.stringify({
+    window.__arc_tunnel_record(JSON.stringify({
       type: 'click',
       timestamp: Date.now(),
       tabId: 0,
@@ -458,7 +458,7 @@ var init_recording_engine = __esm({
     if (inputTimers.has(el)) clearTimeout(inputTimers.get(el));
     inputTimers.set(el, setTimeout(function() {
       inputTimers.delete(el);
-      window.__web_bridge_record(JSON.stringify({
+      window.__arc_tunnel_record(JSON.stringify({
         type: 'type',
         timestamp: Date.now(),
         tabId: 0,
@@ -491,11 +491,11 @@ var init_recording_engine = __esm({
       }
       async injectListeners(tabId) {
         this.recordingTabId = tabId;
-        await this.debuggerController.addBinding(tabId, "__web_bridge_record");
+        await this.debuggerController.addBinding(tabId, "__arc_tunnel_record");
         await this.debuggerController.executeScript(tabId, LISTENER_SCRIPT);
         await this.debuggerController.sendCommand(tabId, "Page.enable");
         this.cdpEventHandler = (source, method, params) => {
-          if (method === "Runtime.bindingCalled" && params?.name === "__web_bridge_record") {
+          if (method === "Runtime.bindingCalled" && params?.name === "__arc_tunnel_record") {
             try {
               const action = JSON.parse(params.payload);
               this.bindingCallback(action);
@@ -524,7 +524,7 @@ var init_recording_engine = __esm({
       async removeListeners() {
         if (this.recordingTabId != null) {
           try {
-            await this.debuggerController.removeBinding(this.recordingTabId, "__web_bridge_record");
+            await this.debuggerController.removeBinding(this.recordingTabId, "__arc_tunnel_record");
           } catch {
           }
         }
@@ -892,7 +892,7 @@ var require_service_worker = __commonJS({
       try {
         await wsClient.connect();
         await tabManager.syncExistingTabs();
-        console.log("Web Bridge extension initialized");
+        console.log("Arc Tunnel extension initialized");
       } catch (error) {
         console.error("Failed to connect to MCP server:", error);
       }
@@ -926,7 +926,7 @@ var require_service_worker = __commonJS({
       wsClient.disconnect();
     });
     initialize();
-    console.log("Web Bridge service worker loaded");
+    console.log("Arc Tunnel service worker loaded");
   }
 });
 export default require_service_worker();

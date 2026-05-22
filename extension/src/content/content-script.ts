@@ -1,4 +1,4 @@
-// Web Bridge Content Script
+// Arc Tunnel Content Script
 // Placeholder for future smart element selection and DOM inspection features.
 // NOTE: Injected into every page (manifest.json matches <all_urls>).
 // While this adds negligible overhead, remove from manifest.json if not needed.

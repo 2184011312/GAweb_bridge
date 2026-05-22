@@ -7,7 +7,7 @@ import { CommandQueue } from './command-queue';
 import { getToolDefinitions } from './tools';
 import { CommandMessage, ResponseMessage, EventMessage } from './types';
 
-export class WebBridgeMCPServer {
+export class ArcTunnelMCPServer {
   private mcpServer: Server;
   private wsServer: WebSocketServer;
   private commandQueue: CommandQueue;
@@ -20,7 +20,7 @@ export class WebBridgeMCPServer {
 
     this.mcpServer = new Server(
       {
-        name: 'web-bridge',
+        name: 'arc-tunnel',
         version: '1.0.0'
       },
       {

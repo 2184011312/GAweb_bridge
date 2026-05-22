@@ -29,7 +29,7 @@ async function initialize() {
     await wsClient.connect();
     // Auto-discover existing tabs
     await tabManager.syncExistingTabs();
-    console.log('Web Bridge extension initialized');
+    console.log('Arc Tunnel extension initialized');
   } catch (error) {
     console.error('Failed to connect to MCP server:', error);
     // Reconnection is handled by WebSocketClient exponential backoff
@@ -80,4 +80,4 @@ chrome.runtime.onSuspend.addListener(() => {
 // Initialize on startup
 initialize();
 
-console.log('Web Bridge service worker loaded');
+console.log('Arc Tunnel service worker loaded');

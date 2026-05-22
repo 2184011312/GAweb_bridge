@@ -1,8 +1,8 @@
-import { WebBridgeMCPServer } from './server';
+import { ArcTunnelMCPServer } from './server';
 
 async function main() {
   const port = parseInt(process.env.WS_PORT || '8765');
-  const server = new WebBridgeMCPServer(port);
+  const server = new ArcTunnelMCPServer(port);
 
   // Start MCP immediately — Claude Code needs this, shouldn't block on WebSocket
   await server.startMCP();
