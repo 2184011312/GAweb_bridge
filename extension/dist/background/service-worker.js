@@ -1477,6 +1477,7 @@ var init_command_handler = __esm({
                 replayTabId = await this.tabManager.createTab();
               }
             }
+            await this.ensureDebuggerAttached(replayTabId);
             await this.playbackEngine.replay(params.recordingId, replayTabId);
             return { status: "replayed", tabId: replayTabId };
           }
